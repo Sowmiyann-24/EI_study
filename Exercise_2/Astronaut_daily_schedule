@@ -1,0 +1,184 @@
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Scanner;
+
+// Task class representing a single task
+class Task {
+    private String description;
+    private LocalTime startTime;
+    private LocalTime endTime;
+    private String priority;
+
+    public Task(String description, LocalTime startTime, LocalTime endTime, String priority) {
+        this.description = description;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.priority = priority;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s - %s: %s [%s]", startTime, endTime, description, priority);
+    }
+}
+
+// TaskFactory for creating Task objects
+class TaskFactory {
+    public static Task createTask(String description, String startTime, String endTime, String priority) {
+        try {
+            LocalTime start = LocalTime.parse(startTime);
+            LocalTime end = LocalTime.parse(endTime);
+            return new Task(description, start, end, priority);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid time format. Please use HH:MM format.");
+        }
+    }
+}
+
+// Observer interface for notifying task conflicts
+interface Observer {
+    void notifyConflict(Task task, Task existingTask);
+}
+
+// ScheduleManager class using Singleton Pattern
+class ScheduleManager {
+    private static ScheduleManager instance;
+    private List<Task> tasks = new ArrayList<>();
+    private List<Observer> observers = new ArrayList<>();
+
+    private ScheduleManager() {}
+
+    public static synchronized ScheduleManager getInstance() {
+        if (instance == null) {
+            instance = new ScheduleManager();
+        }
+        return instance;
+    }
+
+    public void addObserver(Observer observer) {
+        observers.add(observer);
+    }
+
+    public void addTask(Task task) {
+        for (Task existingTask : tasks) {
+            if (task.getStartTime().isBefore(existingTask.getEndTime()) && task.getEndTime().isAfter(existingTask.getStartTime())) {
+                notifyObservers(task, existingTask);
+                System.out.println("Error: Task conflicts with existing task \"" + existingTask.getDescription() + "\".");
+                return;
+            }
+        }
+        tasks.add(task);
+        System.out.println("Task added successfully. No conflicts.");
+    }
+
+    public void removeTask(String description) {
+        Task taskToRemove = null;
+        for (Task task : tasks) {
+            if (task.getDescription().equals(description)) {
+                taskToRemove = task;
+                break;
+            }
+        }
+        if (taskToRemove != null) {
+            tasks.remove(taskToRemove);
+            System.out.println("Task removed successfully.");
+        } else {
+            System.out.println("Error: Task not found.");
+        }
+    }
+
+    public void viewTasks() {
+        if (tasks.isEmpty()) {
+            System.out.println("No tasks scheduled for the day.");
+            return;
+        }
+        Collections.sort(tasks, Comparator.comparing(Task::getStartTime));
+        for (Task task : tasks) {
+            System.out.println(task);
+        }
+    }
+
+    private void notifyObservers(Task task, Task existingTask) {
+        for (Observer observer : observers) {
+            observer.notifyConflict(task, existingTask);
+        }
+    }
+}
+
+// Main class for console interaction
+public class Main {
+    public static void main(String[] args) {
+        ScheduleManager manager = ScheduleManager.getInstance();
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("1. Add Task");
+            System.out.println("2. Remove Task");
+            System.out.println("3. View Tasks");
+            System.out.println("4. Exit");
+            System.out.print("Choose an option: ");
+
+            String input = scanner.nextLine();  // Read the entire line
+            int option;
+
+            try {
+                option = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid option. Please enter a number.");
+                continue;
+            }
+
+            switch (option) {
+                case 1:
+                    System.out.print("Enter description: ");
+                    String description = scanner.nextLine();
+                    System.out.print("Enter start time (HH:MM): ");
+                    String startTime = scanner.nextLine();
+                    System.out.print("Enter end time (HH:MM): ");
+                    String endTime = scanner.nextLine();
+                    System.out.print("Enter priority (Low, Medium, High): ");
+                    String priority = scanner.nextLine();
+                    try {
+                        Task task = TaskFactory.createTask(description, startTime, endTime, priority);
+                        manager.addTask(task);
+                    } catch (IllegalArgumentException e) {
+                        System.out.println(e.getMessage());
+                    }
+                    break;
+                case 2:
+                    System.out.print("Enter task description to remove: ");
+                    String removeDescription = scanner.nextLine();
+                    manager.removeTask(removeDescription);
+                    break;
+                case 3:
+                    manager.viewTasks();
+                    break;
+                case 4:
+                    System.out.println("Exiting...");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Invalid option. Please choose a valid number.");
+            }
+        }
+    }
+}

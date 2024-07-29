@@ -1,0 +1,47 @@
+// Product
+interface Vehicle {
+    void drive();
+}
+
+// Concrete Product
+class Car implements Vehicle {
+    public void drive() {
+        System.out.println("Driving a car");
+    }
+}
+
+class Bike implements Vehicle {
+    public void drive() {
+        System.out.println("Riding a bike");
+    }
+}
+
+// Creator
+abstract class VehicleFactory {
+    public abstract Vehicle createVehicle();
+}
+
+// Concrete Creator
+class CarFactory extends VehicleFactory {
+    public Vehicle createVehicle() {
+        return new Car();
+    }
+}
+
+class BikeFactory extends VehicleFactory {
+    public Vehicle createVehicle() {
+        return new Bike();
+    }
+}
+
+public class FactoryMethodPatternDemo {
+    public static void main(String[] args) {
+        VehicleFactory carFactory = new CarFactory();
+        Vehicle car = carFactory.createVehicle();
+        car.drive();
+
+        VehicleFactory bikeFactory = new BikeFactory();
+        Vehicle bike = bikeFactory.createVehicle();
+        bike.drive();
+    }
+}

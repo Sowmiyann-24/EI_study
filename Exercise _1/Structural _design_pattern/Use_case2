@@ -1,0 +1,54 @@
+// Component
+abstract class Beverage {
+    String description = "Unknown Beverage";
+
+    public String getDescription() {
+        return description;
+    }
+
+    public abstract double cost();
+}
+
+// Concrete Component
+class Espresso extends Beverage {
+    public Espresso() {
+        description = "Espresso";
+    }
+
+    public double cost() {
+        return 1.99;
+    }
+}
+
+// Decorator
+abstract class CondimentDecorator extends Beverage {
+    public abstract String getDescription();
+}
+
+// Concrete Decorator
+class Mocha extends CondimentDecorator {
+    Beverage beverage;
+
+    public Mocha(Beverage beverage) {
+        this.beverage = beverage;
+    }
+
+    public String getDescription() {
+        return beverage.getDescription() + ", Mocha";
+    }
+
+    public double cost() {
+        return 0.20 + beverage.cost();
+    }
+}
+
+public class DecoratorPatternDemo {
+    public static void main(String[] args) {
+        Beverage beverage = new Espresso();
+        System.out.println(beverage.getDescription() + " $" + beverage.cost());
+
+        Beverage beverage2 = new Espresso();
+        beverage2 = new Mocha(beverage2);
+        System.out.println(beverage2.getDescription() + " $" + beverage2.cost());
+    }
+}
